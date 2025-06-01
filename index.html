@@ -1,0 +1,436 @@
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&family=Inter%3Awght%40400%3B500%3B700%3B900&family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+    />
+    <title>TradeTrack</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+      :root {
+        --background: #0a0f1c;
+        --card-bg: #1a2333;
+        --card-border: #4a5e8c;
+        --text-primary: #e0e7ff;
+        --text-secondary: #a5b4fc;
+        --success: #33cc33;
+        --error: #ff3333;
+        --neutral: #6b7280;
+        --accent-blue: #3b82f6;
+        --accent-purple: #8b5cf6;
+        --progress-bg: #4b5563;
+        --progress-fill: #60a5fa;
+      }
+      .text-error { color: var(--error); }
+      .text-success { color: var(--success); }
+      .border-error { border-color: var(--error); }
+      .border-success { border-color: var(--success); }
+      .bg-success { background-color: var(--success); }
+      .bg-error { background-color: var(--error); }
+      .bg-neutral { background-color: var(--neutral); }
+      .collapse-content {
+        max-height: 1000px;
+        opacity: 1;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.3s ease-out;
+      }
+      .collapse-content.hidden {
+        max-height: 0;
+        opacity: 0;
+      }
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+        transition: opacity 0.3s ease-out, transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        z-index: 1000;
+        max-width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      }
+      .notification.show {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+      .notification.success {
+        background-color: var(--success);
+      }
+      .notification.error {
+        background-color: var(--error);
+      }
+      .notification.neutral {
+        background-color: var(--neutral);
+      }
+      .card {
+        transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55), box-shadow 0.3s ease-out;
+      }
+      .card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      }
+      .card:active {
+        transform: scale(0.95);
+      }
+      .button {
+        transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55), background-color 0.2s ease-out;
+      }
+      .button:hover:not(:disabled) {
+        transform: scale(1.1);
+      }
+      .button:active:not(:disabled) {
+        transform: scale(0.9);
+      }
+      .toggle-header {
+        transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+      .toggle-header:hover {
+        transform: scale(1.02);
+      }
+      .toggle-header:active {
+        transform: scale(0.98);
+      }
+      .progress-bar {
+        transition: width 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="relative flex size-full min-h-screen flex-col" style='background-color: var(--background); font-family: Inter, "Noto Sans", sans-serif;'>
+      <div class="layout-container flex h-full grow flex-col">
+        <div id="notification-container"></div>
+        <div class="px-40 flex flex-1 justify-center py-5">
+          <div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+            <div class="flex flex-wrap justify-between gap-3 p-4">
+              <div class="flex min-w-72 flex-col gap-3">
+                <div class="flex items-center gap-2 cursor-pointer toggle-header" id="toggle-trading-session">
+                  <p class="tracking-light text-[32px] font-bold leading-tight" style="color: var(--text-primary);">Trading Session</p>
+                  <svg id="toggle-icon" class="w-6 h-6" style="color: var(--text-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+                <div id="trading-session-input" class="collapse-content">
+                  <p class="text-sm font-normal leading-normal" style="color: var(--text-secondary);">Monitor your progress and manage your trades in real-time.</p>
+                  <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+                    <label class="flex flex-col min-w-40 flex-1">
+                      <p class="text-base font-medium leading-normal pb-2" style="color: var(--text-primary);">Starting Capital</p>
+                      <input
+                        id="starting-capital-input"
+                        class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl focus:outline-0 focus:ring-0 h-14 p-[15px] text-base font-normal leading-normal"
+                        style="background-color: var(--card-bg); border-color: var(--card-border); color: var(--text-primary);"
+                        placeholder="Enter amount"
+                        type="number"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 cursor-pointer px-4 pt-4 toggle-header" id="toggle-daily-goal">
+              <h3 class="text-lg font-bold leading-tight tracking-[-0.015em]" style="color: var(--text-primary);">Daily Goal</h3>
+              <svg id="daily-goal-toggle-icon" class="w-6 h-6" style="color: var(--text-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div id="daily-goal-content" class="collapse-content">
+              <div class="flex flex-col gap-3 p-4">
+                <div class="flex items-center gap-2 justify-between">
+                  <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Progress</p>
+                  <p id="progress-display" class="text-sm font-normal leading-normal" style="color: var(--text-primary);">0%</p>
+                </div>
+                <div class="rounded" style="background-color: var(--progress-bg);"><div id="progress-bar" class="h-6 rounded progress-bar" style="background-color: var(--progress-fill); width: 0%;"></div></div>
+                <p id="target-balance-text" class="text-sm font-normal leading-normal" style="color: var(--text-secondary);">Target: $0.00</p>
+              </div>
+              <div class="flex flex-wrap gap-4 p-4">
+                <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                  <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Starting Capital</p>
+                  <p id="starting-capital-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">$0.00</p>
+                </div>
+                <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                  <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Target Balance</p>
+                  <p id="target-balance-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">$0.00</p>
+                </div>
+                <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                  <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Profit Needed</p>
+                  <p id="profit-needed-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">$0.00</p>
+                </div>
+              </div>
+            </div>
+            <h3 class="text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-4" style="color: var(--text-primary);">Trade Information</h3>
+            <div class="flex flex-wrap gap-4 p-4">
+              <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Trade Number</p>
+                <p id="trade-number-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">0</p>
+              </div>
+              <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Current Capital</p>
+                <p id="current-capital-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">$0.00</p>
+              </div>
+              <div id="profit-loss-card" class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 2px;">
+                <p id="profit-loss-label" class="text-base font-medium leading-normal">Profit/Loss</p>
+                <p id="profit-loss-display" class="tracking-light text-2xl font-bold leading-tight">$0.00</p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-4 p-4">
+              <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Recommended Bet</p>
+                <p id="recommended-bet-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">$0.00</p>
+              </div>
+              <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Target Profit</p>
+                <p id="target-profit-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">$0.00</p>
+              </div>
+              <div class="flex min-w-[158px] flex-1 flex-col gap-2 rounded-xl p-6 card" style="background-color: var(--card-bg); border-color: var(--card-border); border-width: 1px;">
+                <p class="text-base font-medium leading-normal" style="color: var(--text-primary);">Successful Trades</p>
+                <p id="successful-trades-display" class="tracking-light text-2xl font-bold leading-tight" style="color: var(--text-primary);">0</p>
+              </div>
+            </div>
+            <div class="flex justify-stretch">
+              <div class="flex flex-1 gap-3 flex-wrap px-4 py-3 items-center">
+                <button
+                  id="win-button"
+                  class="flex min-w-[84px] max-w-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 text-white text-sm font-bold leading-normal tracking-[0.015em] bg-success button"
+                  disabled
+                >
+                  <span class="truncate">Win</span>
+                </button>
+                <button
+                  id="end-session-button"
+                  class="flex flex-1 max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 text-white text-sm font-bold leading-normal tracking-[0.015em] bg-neutral button"
+                  disabled
+                >
+                  <span class="truncate">End Session</span>
+                </button>
+                <button
+                  id="loss-button"
+                  class="flex min-w-[84px] max-w-[160px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 text-white text-sm font-bold leading-normal tracking-[0.015em] bg-error button"
+                  disabled
+                >
+                  <span class="truncate">Loss</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const PROFIT_PERCENTAGE = 0.92;
+        const DAILY_PROFIT_TARGET_PERCENTAGE = 0.20;
+
+        let initialCapital = 0;
+        let capital = 0;
+        let targetDailyBalance = 0;
+        let dailyProfitNeeded = 0;
+        let totalLoss = 0;
+        let roundNumber = 1;
+        let cyclesCompletedTowardsGoal = 0;
+        let currentCycleDesiredProfit = 0;
+        let sessionActive = false;
+
+        const startingCapitalInput = document.getElementById('starting-capital-input');
+        const startingCapitalDisplay = document.getElementById('starting-capital-display');
+        const targetBalanceDisplay = document.getElementById('target-balance-display');
+        const profitNeededDisplay = document.getElementById('profit-needed-display');
+        const progressDisplay = document.getElementById('progress-display');
+        const progressBar = document.getElementById('progress-bar');
+        const targetBalanceText = document.getElementById('target-balance-text');
+        const tradeNumberDisplay = document.getElementById('trade-number-display');
+        const currentCapitalDisplay = document.getElementById('current-capital-display');
+        const profitLossCard = document.getElementById('profit-loss-card');
+        const profitLossLabel = document.getElementById('profit-loss-label');
+        const profitLossDisplay = document.getElementById('profit-loss-display');
+        const recommendedBetDisplay = document.getElementById('recommended-bet-display');
+        const targetProfitDisplay = document.getElementById('target-profit-display');
+        const successfulTradesDisplay = document.getElementById('successful-trades-display');
+        const notificationContainer = document.getElementById('notification-container');
+        const winButton = document.getElementById('win-button');
+        const lossButton = document.getElementById('loss-button');
+        const endSessionButton = document.getElementById('end-session-button');
+        const toggleTradingSession = document.getElementById('toggle-trading-session');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const tradingSessionInput = document.getElementById('trading-session-input');
+        const dailyGoalToggle = document.getElementById('toggle-daily-goal');
+        const dailyGoalToggleIcon = document.getElementById('daily-goal-toggle-icon');
+        const dailyGoalContent = document.getElementById('daily-goal-content');
+
+        function formatCurrency(value) {
+          return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function showNotification(message, type = 'neutral') {
+          const notification = document.createElement('div');
+          notification.className = `notification ${type}`;
+          notification.textContent = message;
+          notificationContainer.appendChild(notification);
+
+          setTimeout(() => {
+            notification.classList.add('show');
+          }, 10);
+
+          setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+              notification.remove();
+            }, 400);
+          }, 3000);
+        }
+
+        function updateUI() {
+          startingCapitalDisplay.textContent = formatCurrency(initialCapital);
+          targetBalanceDisplay.textContent = formatCurrency(targetDailyBalance);
+          profitNeededDisplay.textContent = formatCurrency(dailyProfitNeeded);
+          const progress = initialCapital > 0 ? Math.min(((capital - initialCapital) / dailyProfitNeeded) * 100, 100) : 0;
+          progressDisplay.textContent = `${Math.round(progress)}%`;
+          progressBar.style.width = `${Math.max(0, progress)}%`;
+          targetBalanceText.textContent = `Target: ${formatCurrency(targetDailyBalance)}`;
+          tradeNumberDisplay.textContent = roundNumber - 1;
+          currentCapitalDisplay.textContent = formatCurrency(capital);
+          const profitLossValue = capital - initialCapital;
+          profitLossDisplay.textContent = (profitLossValue >= 0 ? '+' : '') + formatCurrency(profitLossValue);
+          profitLossCard.classList.remove('border-error', 'border-success');
+          profitLossLabel.classList.remove('text-error', 'text-success');
+          profitLossDisplay.classList.remove('text-error', 'text-success');
+          if (profitLossValue > 0) {
+            profitLossCard.classList.add('border-success');
+            profitLossLabel.classList.add('text-success');
+            profitLossDisplay.classList.add('text-success');
+          } else if (profitLossValue < 0) {
+            profitLossCard.classList.add('border-error');
+            profitLossLabel.classList.add('text-error');
+            profitLossDisplay.classList.add('text-error');
+          } else {
+            profitLossCard.style.borderColor = 'var(--card-border)';
+            profitLossLabel.style.color = 'var(--text-primary)';
+            profitLossDisplay.style.color = 'var(--text-primary)';
+          }
+          recommendedBetDisplay.textContent = formatCurrency(calculateBet());
+          targetProfitDisplay.textContent = formatCurrency(currentCycleDesiredProfit);
+          successfulTradesDisplay.textContent = cyclesCompletedTowardsGoal;
+        }
+
+        function calculateBet() {
+          if (totalLoss === 0) {
+            const currentBaseBet = capital / 75;
+            currentCycleDesiredProfit = PROFIT_PERCENTAGE * currentBaseBet;
+            return currentBaseBet;
+          }
+          return (totalLoss + currentCycleDesiredProfit) / PROFIT_PERCENTAGE;
+        }
+
+        function initializeSession() {
+          const value = parseFloat(startingCapitalInput.value);
+          if (isNaN(value) || value <= 0) {
+            showNotification('Please enter a valid starting capital.', 'error');
+            return false;
+          }
+          initialCapital = value;
+          capital = initialCapital;
+          targetDailyBalance = initialCapital * (1 + DAILY_PROFIT_TARGET_PERCENTAGE);
+          dailyProfitNeeded = targetDailyBalance - initialCapital;
+          const baseBetForInitialEstimate = initialCapital / 75;
+          const desiredProfitForInitialEstimate = PROFIT_PERCENTAGE * baseBetForInitialEstimate;
+          const estimatedSuccessfulCyclesNeeded = desiredProfitForInitialEstimate > 0
+            ? Math.ceil(dailyProfitNeeded / desiredProfitForInitialEstimate)
+            : Infinity;
+          totalLoss = 0;
+          roundNumber = 1;
+          cyclesCompletedTowardsGoal = 0;
+          currentCycleDesiredProfit = 0;
+          showNotification(
+            estimatedSuccessfulCyclesNeeded === Infinity
+              ? 'Estimated Successful Trades Needed: Cannot achieve with current profit settings.'
+              : `Estimated Successful Trades Needed: ${estimatedSuccessfulCyclesNeeded}`,
+            'neutral'
+          );
+          sessionActive = true;
+          winButton.disabled = false;
+          lossButton.disabled = false;
+          endSessionButton.disabled = false;
+          startingCapitalInput.disabled = true;
+          updateUI();
+          return true;
+        }
+
+        function processTrade(outcome) {
+          if (!sessionActive) {
+            showNotification('Please enter a starting capital to begin.', 'error');
+            return;
+          }
+          const bet = calculateBet();
+          if (bet > capital) {
+            showNotification(`Not enough capital to continue. Needed: ${formatCurrency(bet)}, Available: ${formatCurrency(capital)}`, 'error');
+            endSession();
+            return;
+          }
+          if (outcome === 'W') {
+            const profit = PROFIT_PERCENTAGE * bet;
+            capital += profit;
+            totalLoss = 0;
+            cyclesCompletedTowardsGoal += 1;
+            showNotification(`✅ Gained ${formatCurrency(profit)}`, 'success');
+          } else if (outcome === 'L') {
+            capital -= bet;
+            totalLoss += bet;
+            showNotification(`❌ Lost ${formatCurrency(bet)}`, 'error');
+          }
+          roundNumber += 1;
+          if (capital <= 0 || capital >= targetDailyBalance) {
+            endSession();
+          }
+          updateUI();
+        }
+
+        function endSession() {
+          if (!sessionActive) return;
+          sessionActive = false;
+          winButton.disabled = true;
+          lossButton.disabled = true;
+          endSessionButton.disabled = true;
+          startingCapitalInput.disabled = false;
+          if (capital >= targetDailyBalance) {
+            showNotification(`🎉 Daily goal achieved! Final capital: ${formatCurrency(capital)}`, 'success');
+          } else {
+            showNotification(`Goal not achieved. Final capital: ${formatCurrency(capital)}`, capital > initialCapital ? 'success' : 'error');
+          }
+          updateUI();
+        }
+
+        function toggleSessionInput() {
+          const isHidden = tradingSessionInput.classList.toggle('hidden');
+          toggleIcon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function toggleDailyGoal() {
+          const isHidden = dailyGoalContent.classList.toggle('hidden');
+          dailyGoalToggleIcon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        startingCapitalInput.addEventListener('change', () => {
+          if (!sessionActive) {
+            initializeSession();
+          }
+        });
+
+        winButton.addEventListener('click', () => processTrade('W'));
+        lossButton.addEventListener('click', () => processTrade('L'));
+        endSessionButton.addEventListener('click', endSession);
+        toggleTradingSession.addEventListener('click', toggleSessionInput);
+        dailyGoalToggle.addEventListener('click', toggleDailyGoal);
+
+        // Initialize UI to ensure progress bar starts at 0%
+        updateUI();
+      });
+    </script>
+  </body>
+</html>
